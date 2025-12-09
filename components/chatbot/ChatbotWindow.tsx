@@ -24,10 +24,12 @@ const ChatbotWindow = ({
   const handleSend = (message: string) => {
     submitRef.current?.(message); // Call Main's submit with message
   };
+
+  console.log("Chatbot data:", chatbotData)
   return (
     <ChatbotProvider>
-      <main className="border border-gray-200 rounded-sm shadow-lg h-[460px] min-w-76 flex flex-col">
-        <ChatbotHeader onClose={onClose} />
+      <main className="rounded-[20px] overflow-hidden shadow-lg h-[614px] sm:w-[400px] min-w-76 flex flex-col mb-4">
+        <ChatbotHeader name={chatbotData?.name} onClose={onClose} />
         <ChatbotMain
           submitRef={submitRef}
           nodes={chatbotData?.flow?.nodes || []}

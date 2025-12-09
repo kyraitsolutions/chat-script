@@ -168,7 +168,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     const payLoad = {
       ...(leadId && { id: leadId }),
       accountId: accountId,
-      source: { name: "chatbot" },
+      source: { name: "chatbot", chatbotId: chatbotId, url: window.location.href },
     };
 
     wsRef.current?.send({
@@ -201,7 +201,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto hide-scrollbar rounded-lg shadow bg-white">
+    <div className="flex-1 overflow-y-auto hide-scrollbar shadow bg-white">
       {/* Messages */}
       <div className="p-4 space-y-3">
         {messages.map((msg, idx) => (

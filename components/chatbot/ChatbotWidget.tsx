@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import ChatbotWindow from "./ChatbotWindow";
 import ChatbotButton from "./ChatbotButton";
+import { MdClose } from "react-icons/md";
 
 type TFlowElement = {
   id: string;
@@ -35,11 +36,9 @@ const ChatbotWidget = () => {
   const [chatNodes, setChatNodes] = useState<TChatNode[] | []>([]);
   const [chatEdges, setChatEdges] = useState<TChatEdge[] | []>([]);
   const [chatbotConfig, setChatbotConfig] = useState({
-    // accountId: "6911bffab35d190351b5ae54",
-    // chatbotId: "6914b438b2c1e1a040c8e99d",
-
-    accountId: "691f4404de2a4ef7d3831317",
-    chatbotId: "691f46e143c7f114636e14cf",
+    // abhijeet
+    accountId: "6936851e7cf896ac7b646508",
+    chatbotId: "69369c9337b41850d0e05e75",
   });
 
   const [chatbotData, setChatbotData] = useState<TChatbotData | null>({
@@ -71,7 +70,7 @@ const ChatbotWidget = () => {
   }, []);
 
   return (
-    <div className="sm:fixed bottom-10 right-10">
+    <div className="sm:fixed bottom-3 right-3">
       {isOpen && (
         <ChatbotWindow
           onClose={toggleChatbot}
@@ -81,6 +80,11 @@ const ChatbotWidget = () => {
         />
       )}
       {!isOpen && <ChatbotButton onClose={toggleChatbot} />}
+      {isOpen && <div className="flex justify-end">
+        <button onClick={toggleChatbot} className="size-14 rounded-full flex justify-center items-center cursor-pointer shadow-xl p-0.5 transition-all duration-300 bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600
+    hover:scale-105 hover:shadow-2xl relative">
+          <MdClose size={26} color="white" />
+        </button> </div>}
     </div>
   );
 };

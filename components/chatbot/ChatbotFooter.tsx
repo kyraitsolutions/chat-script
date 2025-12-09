@@ -46,6 +46,7 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ onSend }) => {
           <TbSend color={`#fff`} size={18} />
         </button>
       </form>
+      <p className="text-[10px] text-center mt-2 text-gray-400">Product by: Kyra IT Solutions</p>
     </div>
   );
 };

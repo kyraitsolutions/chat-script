@@ -5,6 +5,10 @@
   --foreground: #171717;
 }
 
+body{
+  background-color: #171717;
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

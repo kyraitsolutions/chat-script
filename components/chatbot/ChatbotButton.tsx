@@ -10,7 +10,7 @@ const ChatbotButton = ({ onClose }: ChatbotButtonProps) => {
   return (
     <button
       onClick={onClose}
-      className={`size-20 rounded-full flex justify-center items-center cursor-pointer shadow-xl p-0.5 transition-all duration-300 bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600
+      className={`size-14 rounded-full flex justify-center items-center cursor-pointer shadow-xl p-0.5 transition-all duration-300 bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600
     hover:scale-105 hover:shadow-2xl relative
   `}
     >
