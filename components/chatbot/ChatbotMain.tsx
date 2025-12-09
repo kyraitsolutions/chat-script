@@ -129,7 +129,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       if (el.type === "option") {
         return {
           from: "bot",
-          text: el.title || "",
+          text: el.content || "",
           options: el.choices,
           optionHandles: el.choices?.map((_, i) => `${el.id}-choice-${i}`),
         };
@@ -205,22 +205,25 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       {/* Messages */}
       <div className="p-4 space-y-3">
         {messages.map((msg, idx) => (
-          <ChatbotMessage key={idx} from={msg.from} text={msg.text} />
+          <div key={idx}>
+            <ChatbotMessage from={msg.from} text={msg.text} />
+
+            {msg.options && msg.options.length > 0 && msg.optionHandles && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {msg.options.map((opt, idx) => (
+                  <button
+                    key={opt}
+                    className="bg-gray-50 hover:bg-gray-300 border border-slate-200 shadow-md text-gray-800 px-3 py-2 rounded-full text-sm transition cursor-pointer"
+                    onClick={() => handleSend(opt)}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
 
-        {/* {msg.options && msg.options.length > 0 && msg.optionHandles && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {msg.options.map((opt, idx) => (
-              <button
-                key={opt}
-                className="bg-gray-50 hover:bg-gray-300 border border-slate-200 shadow-md text-gray-800 px-3 py-2 rounded-full text-sm transition cursor-pointer"
-                onClick={() => handleUserReply(opt, msg.optionHandles?.[idx])}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        )} */}
         <div ref={endMessageAreaDivRef} />
       </div>
     </div>

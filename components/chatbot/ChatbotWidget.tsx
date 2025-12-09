@@ -38,8 +38,8 @@ const ChatbotWidget = () => {
     // accountId: "6911bffab35d190351b5ae54",
     // chatbotId: "6914b438b2c1e1a040c8e99d",
 
-    accountId: "691f4404de2a4ef7d3831317",
-    chatbotId: "691f46e143c7f114636e14cf",
+    accountId: "693851435427bbc231f63d25",
+    chatbotId: "693851575427bbc231f63d5e",
   });
 
   const [chatbotData, setChatbotData] = useState<TChatbotData | null>({
@@ -55,7 +55,6 @@ const ChatbotWidget = () => {
 
   const getChatbotData = async () => {
     try {
-      console.log("yes");
       const response = await fetch(
         `http://localhost:3000/api/account/${chatbotConfig?.accountId}/chatbot/${chatbotConfig?.chatbotId}/get`
       );

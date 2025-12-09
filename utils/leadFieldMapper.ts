@@ -9,7 +9,8 @@ export const FIELD_PATTERNS = [
   },
   {
     key: "phone",
-    regex: /(phone|contact number|mobile number|what is your phone)/i,
+    regex:
+      /(phone|contact number|mobile number|what is your phone|what is your number|phone number|what is your mobile)/i,
   },
 ];
 
