@@ -9,7 +9,10 @@ import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
 type Message = {
   from: "bot" | "user";
   text: string;
-  options?: string[];
+  options?: {
+    label: string;
+    value: string;
+  }[];
   optionHandles?: string[];
 };
 
@@ -37,6 +40,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
 }) => {
   const wsRef = useRef<WebSocketClient | null>(null);
 
+  // const [showInput, setShowInput] = useState(true)
   const [leadId, setLeadId] = useState<string | null>(null);
   const endMessageAreaDivRef = useRef<HTMLDivElement | null>(null);
   const [currentNodeId, setCurrentNodeId] = useState(() =>
@@ -99,7 +103,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       const updatedLead = { ...prev };
       if (detectedField && detectedField in updatedLead) {
         // Known field (name/email/phone)
-        updatedLead[detectedField] = userAnswer;
+        updatedLead[detectedField] = userAnswer || "";
       } else {
         // Custom field
         updatedLead.customFields = {
@@ -130,7 +134,12 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
         return {
           from: "bot",
           text: el.content || "",
-          options: el.choices,
+          options: el.choices?.map((c, i) => {
+            return {
+              label: c,
+              value: `${el.id}-choice-${i}`,
+            };
+          }),
           optionHandles: el.choices?.map((_, i) => `${el.id}-choice-${i}`),
         };
       }
@@ -143,12 +152,19 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   };
 
   // handleSend to send message
-  const handleSend = (msg: string) => {
+  const handleSend = (
+    msg: string,
+    option?: { label: string; value: string }
+  ) => {
     if (!msg.trim() || !currentNodeId) return;
     // Add user message to show in UI
     handleShowUserMessage(msg);
     // Prepare bot replies
-    handleUserReplyByBot(undefined, msg);
+    if (!option) {
+      handleUserReplyByBot(undefined, msg);
+    } else {
+      handleUserReplyByBot(option.value, msg);
+    }
   };
 
   // Initialize submitRef
@@ -210,13 +226,13 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
 
             {msg.options && msg.options.length > 0 && msg.optionHandles && (
               <div className="flex flex-wrap gap-2 mt-4">
-                {msg.options.map((opt, idx) => (
+                {msg.options.map((opt) => (
                   <button
-                    key={opt}
+                    key={opt.value}
                     className="bg-gray-50 hover:bg-gray-300 border border-slate-200 shadow-md text-gray-800 px-3 py-2 rounded-full text-sm transition cursor-pointer"
-                    onClick={() => handleSend(opt)}
+                    onClick={() => handleSend(opt.label, opt)}
                   >
-                    {opt}
+                    {opt.label}
                   </button>
                 ))}
               </div>

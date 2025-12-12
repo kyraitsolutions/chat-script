@@ -38,8 +38,8 @@ const ChatbotWidget = () => {
     // accountId: "6911bffab35d190351b5ae54",
     // chatbotId: "6914b438b2c1e1a040c8e99d",
 
-    accountId: "693851435427bbc231f63d25",
-    chatbotId: "693851575427bbc231f63d5e",
+    accountId: "693c43e7533cb1052245a998",
+    chatbotId: "693c449ea4e83f9488c7a71f",
   });
 
   const [chatbotData, setChatbotData] = useState<TChatbotData | null>({
