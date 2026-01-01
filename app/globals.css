@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
