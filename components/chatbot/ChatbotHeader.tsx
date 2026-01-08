@@ -1,15 +1,19 @@
-import React from "react";
+import { TChatbotTheme } from "@/types/chat-bot.type";
 import { RxCross2 } from "react-icons/rx";
 
 type ChatbotButtonProps = {
   name: string;
   onClose: () => void;
+  theme: TChatbotTheme | null;
 };
 
-const ChatbotHeader = ({ name, onClose }: ChatbotButtonProps) => {
+const ChatbotHeader = ({ name, theme, onClose }: ChatbotButtonProps) => {
   return (
     <div
-      className={`bg-gray-500 rounded-t-sm px-5 py-2 flex justify-between items-center`}
+      style={{
+        backgroundColor: theme?.backgroundColor || "#1b181b",
+      }}
+      className={`bg-gray-500 md:rounded-t-sm px-5 py-2 flex justify-between items-center`}
     >
       <div>
         <h2 className="text-white font-medium text-sm capitalize">{name}</h2>

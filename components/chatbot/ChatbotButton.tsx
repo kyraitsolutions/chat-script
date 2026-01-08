@@ -2,17 +2,20 @@ import Image from "next/image";
 import React from "react";
 
 type ChatbotButtonProps = {
+  backgroundColor?: string;
   onClose: () => void;
 };
 
-const ChatbotButton = ({ onClose }: ChatbotButtonProps) => {
+const ChatbotButton = ({ onClose, backgroundColor }: ChatbotButtonProps) => {
   const chatbotImage = "/images/ChatbotImage.jpg";
   return (
     <button
+      style={{
+        backgroundColor: backgroundColor || "#fefef",
+      }}
       onClick={onClose}
-      className={`size-14 rounded-full flex justify-center items-center cursor-pointer shadow-xl p-0.5 transition-all duration-300 bg-gray-500
-    hover:scale-105 hover:shadow-2xl relative
-  `}
+      className={`size-14 rounded-full flex justify-center items-center cursor-pointer shadow-sm p-0.5 transition-all duration-300
+      hover:scale-105 relative`}
     >
       {/* Glow Ring */}
       {/* <span className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 blur-lg opacity-40" /> */}
@@ -20,8 +23,7 @@ const ChatbotButton = ({ onClose }: ChatbotButtonProps) => {
       {/* Inner Circle */}
       <div
         className="
-      relative w-full h-full rounded-full overflow-hidden 
-      border border-white/20 backdrop-blur-sm"
+      relative w-full h-full rounded-full overflow-hidden"
       >
         <Image
           src={chatbotImage}

@@ -6,13 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:chatbot-script": "esbuild widget/chatbot-script.js --bundle --minify --format=iife --target=es2017 --outfile=public/widget/chatbot-script.js"
   },
   "dependencies": {
+    "esbuild": "^0.27.2",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

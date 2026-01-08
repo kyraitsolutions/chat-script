@@ -1,10 +1,14 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import ChatbotMessage from "./ChatbotMessage";
-import { TChatEdge, TChatNode } from "./ChatbotWidget";
 import WebSocketClient from "@/config/websocketClient";
 import { WEBSOCKET_EVENTS, WEBSOCKET_URL } from "@/constant/constant";
+import {
+  TChatbotEdge,
+  TChatbotNode,
+  TChatbotTheme,
+} from "@/types/chat-bot.type";
 import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import ChatbotMessage from "./ChatbotMessage";
 
 type Message = {
   from: "bot" | "user";
@@ -18,8 +22,9 @@ type Message = {
 
 type ChatbotMainProps = {
   submitRef: React.RefObject<((msg: string) => void) | null>;
-  nodes: TChatNode[];
-  edges: TChatEdge[];
+  theme: TChatbotTheme | null;
+  nodes: TChatbotNode[];
+  edges: TChatbotEdge[];
   accountId: string;
   chatbotId: string;
 };
@@ -36,7 +41,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   nodes,
   edges,
   accountId,
-  chatbotId,
+  theme,
 }) => {
   const wsRef = useRef<WebSocketClient | null>(null);
 
@@ -59,7 +64,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     const firstNode = nodes?.[0];
     if (!firstNode) return [];
 
-    return firstNode.data.elements
+    return firstNode?.data?.elements
       .filter((el) => el.type === "text")
       .map((el) => ({ from: "bot", text: el.content }));
   }, [nodes]);
@@ -73,19 +78,22 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   };
 
   // getOutgoingEdge
-  const getOutgoingEdge = (edges: TChatEdge[]) => {
+  const getOutgoingEdge = (edges: TChatbotEdge[]) => {
     return edges.filter((e) => e.source === currentNodeId);
   };
 
   // getMatchedEdge
-  const getMatchedEdge = (outgoingEdge: TChatEdge[], sourceHandle?: string) => {
+  const getMatchedEdge = (
+    outgoingEdge: TChatbotEdge[],
+    sourceHandle?: string
+  ) => {
     return sourceHandle
       ? outgoingEdge.find((e) => e.sourceHandle === sourceHandle)
       : outgoingEdge[0];
   };
 
   // getNextNode
-  const getNextNode = (nodes: TChatNode[], nextNodeId: string) => {
+  const getNextNode = (nodes: TChatbotNode[], nextNodeId: string) => {
     setCurrentNodeId(nextNodeId);
     return nodes.find((n) => n.id === nextNodeId);
   };
@@ -103,7 +111,8 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       const updatedLead = { ...prev };
       if (detectedField && detectedField in updatedLead) {
         // Known field (name/email/phone)
-        updatedLead[detectedField] = userAnswer || "";
+        updatedLead[detectedField as "name" | "email" | "phone"] =
+          userAnswer || "";
       } else {
         // Custom field
         updatedLead.customFields = {
@@ -222,7 +231,14 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       <div className="p-4 space-y-3">
         {messages.map((msg, idx) => (
           <div key={idx}>
-            <ChatbotMessage from={msg.from} text={msg.text} />
+            <ChatbotMessage
+              from={msg.from}
+              text={msg.text}
+              color={{
+                userMessageColor: theme?.userMessageColor,
+                messageColor: theme?.messageColor,
+              }}
+            />
 
             {msg.options && msg.options.length > 0 && msg.optionHandles && (
               <div className="flex flex-wrap gap-2 mt-4">
