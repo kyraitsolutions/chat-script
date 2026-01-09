@@ -1,7 +1,7 @@
 
 
 (function () {
-  const url="https://chat-script-rho.vercel.app/"
+  const url="https://crm.kyraitsolutions.com/"
   // const url="http://localhost:3001"
 
   const iframe = document.createElement("iframe");
