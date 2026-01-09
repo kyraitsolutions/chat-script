@@ -1,7 +1,11 @@
-(function () {
-  const iframe = document.createElement("iframe");
 
-  iframe.src = "http://localhost:3001";
+
+(function () {
+  const url="https://chat-script-rho.vercel.app/"
+  // const url="http://localhost:3001"
+
+  const iframe = document.createElement("iframe");
+  iframe.src = url;
   iframe.id = "chatbot-iframe";
   iframe.title = "Chatbot";
   iframe.classList.add("hide-scrollbar");
