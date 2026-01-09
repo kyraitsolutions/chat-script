@@ -5,8 +5,8 @@ import ChatbotButton from "./ChatbotButton";
 import { MdClose } from "react-icons/md";
 import {
   TChatBotData,
-  TChatbotEdge,
-  TChatbotNode,
+  // TChatbotEdge,
+  // TChatbotNode,
 } from "@/types/chat-bot.type";
 import { BASE_URL_API } from "@/constant/constant";
 
@@ -43,8 +43,10 @@ const ChatbotWidget = () => {
   // const [chatNodes, setChatNodes] = useState<TChatbotNode[] | []>([]);
   // const [chatEdges, setChatEdges] = useState<TChatbotEdge[] | []>([]);
   const [chatbotConfig, setChatbotConfig] = useState({
-    accountId: "6952aa3e6afef960c93d0ede",
-    chatbotId: "695a934c848aa4d7bfd3ff43",
+    // accountId: "6952aa3e6afef960c93d0ede",
+    // chatbotId: "695a934c848aa4d7bfd3ff43",
+    accountId:"6955346367b2c98b79eedfe5",
+    chatbotId:"695a5a5f97f4a2efc7e96e54"
   });
 
   const [chatbotData, setChatbotData] = useState<TChatBotData | null>(null);
