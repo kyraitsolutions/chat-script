@@ -49,6 +49,9 @@ const ChatbotWidget = () => {
     chatbotId: ""
   });
 
+  //  accountId: "6967c9bcf57435ffcc6bb032",
+  //   chatbotId: "6967ca4ff57435ffcc6bb0de"
+
   const [chatbotData, setChatbotData] = useState<TChatBotData | null>(null);
 
   const toggleChatbot = () => {
@@ -66,10 +69,6 @@ const ChatbotWidget = () => {
       console.error("Error fetching chatbot data:", error);
     }
   };
-
-  useEffect(() => {
-    getChatbotData();
-  }, []);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -91,6 +90,15 @@ const ChatbotWidget = () => {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [isOpen, chatbotData?.status]);
+
+  useEffect(() => {
+    if (chatbotConfig.accountId && chatbotConfig.chatbotId) {
+      getChatbotData();
+
+    }
+  }, [chatbotConfig.accountId, chatbotConfig.chatbotId]);
+
+
 
   return (
     <div className="sm:fixed bottom-3 right-3 ">

@@ -1,7 +1,6 @@
 (function () {
   const iframe = document.createElement("iframe");
   iframe.src = "http://localhost:3001"; // for local testing
-  // iframe.src = "https://chatbot.kyraitsolutions.com"; // for local testing
   // iframe.sandbox = "allow-scripts allow-same-origin allow-popups";
   iframe.title = "Chatbot";
   iframe.id = "chatbot-iframe";

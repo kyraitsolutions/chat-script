@@ -2,7 +2,7 @@
 
 (function () {
   const url="https://chatbot.kyraitsolutions.com"
-  // const url="http://localhost:3001"
+  // const url="http://localhost:3000"
 
   const iframe = document.createElement("iframe");
   iframe.src = url;
