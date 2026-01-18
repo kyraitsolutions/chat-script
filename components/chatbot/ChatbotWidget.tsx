@@ -1,14 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import ChatbotWindow from "./ChatbotWindow";
-import ChatbotButton from "./ChatbotButton";
-import { MdClose } from "react-icons/md";
-import {
-  TChatBotData,
-  TChatbotEdge,
-  TChatbotNode,
-} from "@/types/chat-bot.type";
 import { BASE_URL_API } from "@/constant/constant";
+import { TChatBotData } from "@/types/chat-bot.type";
+import { useEffect, useState } from "react";
+import { MdClose } from "react-icons/md";
+import ChatbotButton from "./ChatbotButton";
+import ChatbotWindow from "./ChatbotWindow";
 
 // type TFlowElement = {
 //   id: string;
@@ -43,8 +39,8 @@ const ChatbotWidget = () => {
   // const [chatNodes, setChatNodes] = useState<TChatbotNode[] | []>([]);
   // const [chatEdges, setChatEdges] = useState<TChatbotEdge[] | []>([]);
   const [chatbotConfig, setChatbotConfig] = useState({
-    accountId: "6952aa3e6afef960c93d0ede",
-    chatbotId: "695a934c848aa4d7bfd3ff43",
+    accountId: "696a5d5a3a6180d00efb0e19",
+    chatbotId: "696a5d903a6180d00efb0e56",
   });
 
   const [chatbotData, setChatbotData] = useState<TChatBotData | null>(null);

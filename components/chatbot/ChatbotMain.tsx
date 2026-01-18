@@ -1,11 +1,13 @@
 "use client";
 import WebSocketClient from "@/config/websocketClient";
 import { WEBSOCKET_EVENTS, WEBSOCKET_URL } from "@/constant/constant";
+import { useChatbotContext } from "@/context/ChatbotContext";
 import {
   TChatbotEdge,
   TChatbotNode,
   TChatbotTheme,
 } from "@/types/chat-bot.type";
+import { getSession, updateSession } from "@/utils/chatbotIndexDb";
 import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ChatbotMessage from "./ChatbotMessage";
@@ -29,7 +31,7 @@ type ChatbotMainProps = {
   chatbotId: string;
 };
 
-type Lead = {
+export type Lead = {
   name: string;
   email: string;
   phone: string;
@@ -42,14 +44,18 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   edges,
   accountId,
   theme,
+  chatbotId,
 }) => {
+  const { activeSessionId } = useChatbotContext();
   const wsRef = useRef<WebSocketClient | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   // const [showInput, setShowInput] = useState(true)
+  const [loading, setLoading] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
   const endMessageAreaDivRef = useRef<HTMLDivElement | null>(null);
   const [currentNodeId, setCurrentNodeId] = useState(() =>
-    nodes && nodes.length > 0 ? nodes[0].id : null
+    nodes && nodes.length > 0 ? nodes[0].id : null,
   );
 
   const [lead, setLead] = useState<Lead>({
@@ -69,7 +75,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       .map((el) => ({ from: "bot", text: el.content }));
   }, [nodes]);
   const [messages, setMessages] = useState<Message[]>(
-    initialMessages as Message[]
+    initialMessages as Message[],
   );
 
   //handleShowUserMessage to add user message to show in UI
@@ -85,7 +91,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   // getMatchedEdge
   const getMatchedEdge = (
     outgoingEdge: TChatbotEdge[],
-    sourceHandle?: string
+    sourceHandle?: string,
   ) => {
     return sourceHandle
       ? outgoingEdge.find((e) => e.sourceHandle === sourceHandle)
@@ -101,7 +107,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   // handleSendChatToServerViaWebsocket
   const handleSendChatToServerViaWebsocket = (
     botReplyData: Message[],
-    userAnswer?: string
+    userAnswer?: string,
   ) => {
     const lastBotMessage = messages[messages.length - 1]; // last bot question
     const detectedField = detectFieldFromQuestion(lastBotMessage.text);
@@ -130,13 +136,16 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   };
 
   // handleUserReplyByBot to prepare bot replies
-  const handleUserReplyByBot = (sourceHandle?: string, msg?: string) => {
+  const handleUserReplyByBot = async (sourceHandle?: string, msg?: string) => {
     const outgoingEdge = getOutgoingEdge(edges);
     const matchedEdge = getMatchedEdge(outgoingEdge, sourceHandle); // fallback to first edge if no handle
     const nextNodeId = matchedEdge?.target;
     if (!nextNodeId) return;
     const nextNode = getNextNode(nodes, nextNodeId);
     if (!nextNode) return;
+    await updateSession(activeSessionId!, {
+      currentNodeId: nextNodeId,
+    });
     // Prepare bot replies
     const botReplyData: Message[] = nextNode?.data?.elements?.map((el) => {
       if (el.type === "option") {
@@ -163,7 +172,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   // handleSend to send message
   const handleSend = (
     msg: string,
-    option?: { label: string; value: string }
+    option?: { label: string; value: string },
   ) => {
     if (!msg.trim() || !currentNodeId) return;
     // Add user message to show in UI
@@ -181,15 +190,62 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     submitRef.current = handleSend;
   }, [handleSend]);
 
+  // Connect to websocket
+  useEffect(() => {
+    wsRef.current = new WebSocketClient(
+      `${WEBSOCKET_URL}?accountId=${accountId}`,
+    );
+
+    wsRef.current.connect(async (serverResponse) => {
+      if (serverResponse.event === WEBSOCKET_EVENTS["Chatbot Lead Created"]) {
+        setLeadId(serverResponse.data?.lead?._id);
+        await updateSession(activeSessionId!, {
+          leadId: serverResponse.data?.lead?._id,
+        });
+      }
+    });
+
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
+
   // Scroll to bottom
   useEffect(() => {
     endMessageAreaDivRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    if (!sessionIdRef.current) return;
+    if (messages.length === 0) return;
+
+    const timeout = setTimeout(() => {
+      updateSession(sessionIdRef.current!, {
+        messages,
+        updatedAt: Date.now(),
+      });
+    }, 300);
+
+    return () => clearTimeout(timeout);
   }, [messages]);
+
+  // Init session
+  useEffect(() => {
+    const initSession = async () => {
+      setLoading(true);
+      sessionIdRef.current = activeSessionId;
+      const session = await getSession(activeSessionId!);
+      if (session && session?.messages && session?.messages.length > 2) {
+        setMessages(session?.messages || []);
+        setCurrentNodeId(session?.currentNodeId || null);
+        setLeadId(session?.leadId || null);
+        setLead(session?.lead as Lead);
+      }
+    };
+
+    initSession();
+  }, [activeSessionId]);
 
   // Send lead to server
   useEffect(() => {
-    if (!lead) return;
-
     const payLoad = {
       ...(leadId && { id: leadId }),
       accountId: accountId,
@@ -205,28 +261,33 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
         ...lead,
       },
     });
+
+    const updateLeadSession = async () => {
+      await updateSession(activeSessionId!, {
+        lead,
+      });
+    };
+
+    if (lead?.email || lead?.phone || lead?.name) {
+      updateLeadSession();
+    }
   }, [lead]);
 
-  // Connect to websocket
   useEffect(() => {
-    wsRef.current = new WebSocketClient(
-      `${WEBSOCKET_URL}?accountId=${accountId}`
-    );
-
-    wsRef.current.connect((serverResponse) => {
-      console.log(serverResponse);
-      if (serverResponse.event === WEBSOCKET_EVENTS["Chatbot Lead Created"]) {
-        setLeadId(serverResponse.data?.lead?._id);
-      }
-    });
-
-    return () => {
-      wsRef.current?.close();
+    const updateSessionForLeadId = async () => {
+      await updateSession(activeSessionId!, {
+        leadId: leadId,
+      });
     };
-  }, []);
+    if (leadId) {
+      updateSessionForLeadId();
+    }
+  }, [leadId]);
+
+  console.log(lead);
 
   return (
-    <div className="flex-1 overflow-y-auto hide-scrollbar rounded-t-lg shadow bg-white">
+    <div className=" overflow-y-auto hide-scrollbar rounded-t-lg shadow bg-white h-full">
       {/* Messages */}
       <div className="p-4 space-y-3">
         {messages.map((msg, idx) => (
