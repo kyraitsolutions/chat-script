@@ -1,6 +1,5 @@
 (function () {
   const iframe = document.createElement("iframe");
-
   iframe.src = "http://localhost:3001";
   iframe.id = "chatbot-iframe";
   iframe.title = "Chatbot";
@@ -42,7 +41,7 @@
           iframe.style.display = "block";
           iframe.setAttribute(
             "style",
-            "position: fixed; width:60px; height:60px; backgrond:transparent; box-shadow:none padding:2px; border:none; z-index:99999999;"
+            "position: fixed; width:60px; height:60px; backgrond:transparent; box-shadow:none padding:2px; border:none; z-index:99999999;",
           );
 
           if (positionWidget.toLowerCase() === "bottom-right") {
@@ -69,7 +68,7 @@
             type: "CHATBOT_INIT",
             payload: { ...window.eazbotConfig } || {},
           },
-          "*"
+          "*",
         );
       } catch (error) {
         console.log(error);
