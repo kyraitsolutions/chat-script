@@ -1,8 +1,13 @@
-import React from "react";
+"use client";
 import ChatbotWidget from "./ChatbotWidget";
+import { ChatbotProvider } from "@/context/ChatbotContext";
 
 const ChatbotApp = () => {
-  return <ChatbotWidget />;
+  return (
+    <ChatbotProvider>
+      <ChatbotWidget />
+    </ChatbotProvider>
+  );
 };
 
 export default ChatbotApp;
