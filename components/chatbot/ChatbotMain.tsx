@@ -1,30 +1,44 @@
 "use client";
 import WebSocketClient from "@/config/websocketClient";
-import { WEBSOCKET_EVENTS, WEBSOCKET_URL } from "@/constant/constant";
+import {
+  COOKIES_STORAGE_KEY,
+  WEBSOCKET_EVENTS,
+  WEBSOCKET_URL,
+} from "@/constant/constant";
 import { useChatbotContext } from "@/context/ChatbotContext";
 import {
+  TChatBotData,
   TChatbotEdge,
   TChatbotNode,
   TChatbotTheme,
 } from "@/types/chat-bot.type";
-import { getSession, updateSession } from "@/utils/chatbotIndexDb";
+import { getSession, updateSession } from "@/utils/chatbot/chatbotIndexDb";
+import { executeNode } from "@/utils/chatbot/flow/executeNode";
 import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ChatbotMessage from "./ChatbotMessage";
+import { TMessage } from "@/types/message.type";
+import TypingIndicator from "../typingIndicator/TypingIndicator";
+import { resolveNextNode } from "@/utils/chatbot/flow/resolveNextNode";
+import { saveMessagesToBackend } from "@/services/sendMessage";
+import { CookieUtils } from "@/utils/cookie-storage.utils";
+import { persistMessages } from "@/utils/persistMessage";
+import { generateMessageId } from "@/utils/generateMessageId";
 
-type Message = {
-  from: "bot" | "user";
-  text: string;
-  options?: {
-    label: string;
-    value: string;
-  }[];
-  optionHandles?: string[];
-};
+// type Message = {
+//   from: "bot" | "user";
+//   text: string;
+//   options?: {
+//     label: string;
+//     value: string;
+//   }[];
+//   optionHandles?: string[];
+// };
 
 type ChatbotMainProps = {
   submitRef: React.RefObject<((msg: string) => void) | null>;
   theme: TChatbotTheme | null;
+  config: TChatBotData["config"] | null;
   nodes: TChatbotNode[];
   edges: TChatbotEdge[];
   accountId: string;
@@ -44,19 +58,21 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   edges,
   accountId,
   theme,
+  config,
   chatbotId,
 }) => {
-  const { activeSessionId } = useChatbotContext();
+  const { activeSessionId, conversationId, setInputConfig } =
+    useChatbotContext();
   const wsRef = useRef<WebSocketClient | null>(null);
   const sessionIdRef = useRef<string | null>(null);
 
-  // const [showInput, setShowInput] = useState(true)
   const [loading, setLoading] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
   const endMessageAreaDivRef = useRef<HTMLDivElement | null>(null);
   const [currentNodeId, setCurrentNodeId] = useState(() =>
     nodes && nodes.length > 0 ? nodes[0].id : null,
   );
+  const [typingIndicator, setTypingIndicator] = useState(false);
 
   const [lead, setLead] = useState<Lead>({
     name: "",
@@ -66,42 +82,59 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   });
 
   // Initialize first node messages
-  const initialMessages = useMemo(() => {
-    const firstNode = nodes?.[0];
-    if (!firstNode) return [];
 
-    return firstNode?.data?.elements
-      .filter((el) => el.type === "text")
-      .map((el) => ({ from: "bot", text: el.content }));
-  }, [nodes]);
-  const [messages, setMessages] = useState<Message[]>(
-    initialMessages as Message[],
-  );
+  const [messages, setMessages] = useState<TMessage[]>([]);
 
   //handleShowUserMessage to add user message to show in UI
-  const handleShowUserMessage = (msg: string) => {
-    setMessages((prev) => [...prev, { from: "user", text: msg }]);
-  };
+  const handleShowUserMessage = async ({
+    msg,
+    replyId,
+    messageId,
+  }: {
+    msg?: string;
+    replyId?: string;
+    messageId?: string;
+  }) => {
+    const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
+    const currentMessage = messages.find((m) => m.messageId === messageId);
 
-  // getOutgoingEdge
-  const getOutgoingEdge = (edges: TChatbotEdge[]) => {
-    return edges.filter((e) => e.source === currentNodeId);
-  };
+    const messagePayload: TMessage = {
+      messageId: generateMessageId({
+        direction: "inbound",
+        platform: "chatbot",
+        type: "text",
+      }),
+      from: "user",
+      type: "text",
+      body: {
+        text: msg || "",
+      },
+      status: "delivered",
+      direction: "inbound",
+      platform: "chatbot",
+      ...(replyId && {
+        context: {
+          messageId,
+          message:
+            currentMessage?.type === "interactive"
+              ? currentMessage?.interactive?.body?.text
+              : "",
+        },
+      }),
+      ...(visitorId && { visitorId: String(visitorId) }),
+      ...(conversationId && { conversationId: String(conversationId) }),
+      ...(accountId && { accountId: String(accountId) }),
+    };
 
-  // getMatchedEdge
-  const getMatchedEdge = (
-    outgoingEdge: TChatbotEdge[],
-    sourceHandle?: string,
-  ) => {
-    return sourceHandle
-      ? outgoingEdge.find((e) => e.sourceHandle === sourceHandle)
-      : outgoingEdge[0];
-  };
+    // UI
+    setMessages((prev) => [...prev, messagePayload]);
 
-  // getNextNode
-  const getNextNode = (nodes: TChatbotNode[], nextNodeId: string) => {
-    setCurrentNodeId(nextNodeId);
-    return nodes.find((n) => n.id === nextNodeId);
+    // BACKEND
+    await persistMessages({
+      ...messagePayload,
+    });
+
+    return messagePayload;
   };
 
   // handleSendChatToServerViaWebsocket
@@ -135,60 +168,160 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     });
   };
 
-  // handleUserReplyByBot to prepare bot replies
-  const handleUserReplyByBot = async (sourceHandle?: string, msg?: string) => {
-    const outgoingEdge = getOutgoingEdge(edges);
-    const matchedEdge = getMatchedEdge(outgoingEdge, sourceHandle); // fallback to first edge if no handle
-    const nextNodeId = matchedEdge?.target;
-    if (!nextNodeId) return;
-    const nextNode = getNextNode(nodes, nextNodeId);
-    if (!nextNode) return;
-    await updateSession(activeSessionId!, {
-      currentNodeId: nextNodeId,
-    });
-    // Prepare bot replies
-    const botReplyData: Message[] = nextNode?.data?.elements?.map((el) => {
-      if (el.type === "option") {
-        return {
-          from: "bot",
-          text: el.content || "",
-          options: el.choices?.map((c, i) => {
-            return {
-              label: c,
-              value: `${el.id}-choice-${i}`,
-            };
-          }),
-          optionHandles: el.choices?.map((_, i) => `${el.id}-choice-${i}`),
-        };
-      }
-      return { from: "bot", text: el.content || "" };
-    });
+  const handlePersistMessages = async (messages: TMessage[]) => {
+    const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
 
-    handleSendChatToServerViaWebsocket(botReplyData, msg);
-    // Send all prev chat to server via websocket
-    // setMessages((prev) => [...prev, ...botReplyData]);
+    await persistMessages({
+      ...messages[0],
+      chatbotId: chatbotId,
+      accountId: String(accountId),
+      visitorId: String(visitorId),
+      conversationId: String(conversationId),
+    });
+  };
+
+  // handleUserReplyByBot to prepare bot replies
+  const handleUserReplyByBot = async ({
+    replyId,
+    msg,
+  }: {
+    replyId?: string;
+    msg?: string;
+  }) => {
+    // const outgoingEdge = getOutgoingEdge(edges);
+    // const matchedEdge = getMatchedEdge(outgoingEdge, sourceHandle); // fallback to first edge if no handle
+    // const nextNodeId = matchedEdge?.target;
+    // if (!nextNodeId) return;
+    // const nextNode = getNextNode(nodes, nextNodeId);
+    // if (!nextNode) return;
+    // await updateSession(activeSessionId!, {
+    //   currentNodeId: nextNodeId,
+    // });
+    // // Prepare bot replies
+    // const botReplyData: Message[] = nextNode?.data?.elements?.map((el) => {
+    //   if (el.type === "option") {
+    //     return {
+    //       from: "bot",
+    //       text: el.content || "",
+    //       options: el.choices?.map((c, i) => {
+    //         return {
+    //           label: c,
+    //           value: `${el.id}-choice-${i}`,
+    //         };
+    //       }),
+    //       optionHandles: el.choices?.map((_, i) => `${el.id}-choice-${i}`),
+    //     };
+    //   }
+    //   return { from: "bot", text: el.content || "" };
+    // });
+    // handleSendChatToServerViaWebsocket(botReplyData, msg);
+    // // Send all prev chat to server via websocket
+    // // setMessages((prev) => [...prev, ...botReplyData]);
   };
 
   // handleSend to send message
-  const handleSend = (
-    msg: string,
-    option?: { label: string; value: string },
-  ) => {
+  const handleSend = (msg: string) => {
     if (!msg.trim() || !currentNodeId) return;
-    // Add user message to show in UI
-    handleShowUserMessage(msg);
-    // Prepare bot replies
-    if (!option) {
-      handleUserReplyByBot(undefined, msg);
-    } else {
-      handleUserReplyByBot(option.value, msg);
-    }
+    // // Add user message to show in UI
+    handleShowUserMessage({ msg });
+
+    const nextEdge = resolveNextNode({
+      edges,
+      currentNodeId,
+    });
+
+    executeNode({
+      nodeId: String(nextEdge?.target),
+      nodes,
+      edges,
+      setMessages,
+      setTypingIndicator,
+      setCurrentNodeId,
+      setInputConfig,
+      onMessages: handlePersistMessages,
+    });
   };
 
-  // Initialize submitRef
-  useEffect(() => {
-    submitRef.current = handleSend;
-  }, [handleSend]);
+  const handleButtonReply = async ({
+    replyId,
+    msg,
+    messageId,
+  }: {
+    replyId?: string;
+    msg?: string;
+    messageId?: string;
+  }) => {
+    if (!replyId) return;
+    handleShowUserMessage({ replyId, msg, messageId });
+
+    const nextEdge = resolveNextNode({
+      edges,
+      sourceHandle: replyId,
+    });
+
+    if (!nextEdge?.target) return;
+
+    executeNode({
+      nodeId: nextEdge.target,
+      nodes,
+      edges,
+      setMessages,
+      setTypingIndicator,
+      setCurrentNodeId,
+      sourceHandle: replyId,
+      setInputConfig,
+      onMessages: handlePersistMessages,
+    });
+  };
+
+  const handleSetInitialMessage = () => {
+    const firstNode = nodes?.[0];
+    if (!firstNode) return [];
+
+    executeNode({
+      nodeId: firstNode.id,
+      nodes,
+      edges,
+      setMessages,
+      setTypingIndicator,
+      setCurrentNodeId,
+      setInputConfig,
+      onMessages: handlePersistMessages,
+    });
+  };
+
+  // const initSession = async () => {
+  //   setLoading(true);
+  //   sessionIdRef.current = activeSessionId;
+  //   const session = await getSession(activeSessionId!);
+  //   if (session && session?.messages && session?.messages.length > 0) {
+  //     setMessages(session?.messages || []);
+  //     setCurrentNodeId(session?.currentNodeId || null);
+  //     setLeadId(session?.leadId || null);
+  //     setLead(session?.lead as Lead);
+  //   } else {
+  //     setMessages([]);
+  //     handleSetInitialMessage();
+  //   }
+  // };
+
+  const initSession = async () => {
+    setMessages([]);
+    setLoading(true);
+    sessionIdRef.current = activeSessionId;
+    const session = await getSession(activeSessionId!);
+
+    if (session && session.messages && session.messages.length > 0) {
+      setMessages(session.messages);
+      setCurrentNodeId(session.currentNodeId || null);
+      setLeadId(session.leadId || null);
+      setLead(session.lead as Lead);
+    } else {
+      handleSetInitialMessage();
+    }
+
+    setLoading(false);
+  };
 
   // Connect to websocket
   useEffect(() => {
@@ -210,6 +343,11 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     };
   }, []);
 
+  // Initialize submitRef
+  useEffect(() => {
+    submitRef.current = handleSend;
+  }, [handleSend]);
+
   // Scroll to bottom
   useEffect(() => {
     endMessageAreaDivRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -219,6 +357,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
 
     const timeout = setTimeout(() => {
       updateSession(sessionIdRef.current!, {
+        currentNodeId,
         messages,
         updatedAt: Date.now(),
       });
@@ -229,18 +368,6 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
 
   // Init session
   useEffect(() => {
-    const initSession = async () => {
-      setLoading(true);
-      sessionIdRef.current = activeSessionId;
-      const session = await getSession(activeSessionId!);
-      if (session && session?.messages && session?.messages.length > 2) {
-        setMessages(session?.messages || []);
-        setCurrentNodeId(session?.currentNodeId || null);
-        setLeadId(session?.leadId || null);
-        setLead(session?.lead as Lead);
-      }
-    };
-
     initSession();
   }, [activeSessionId]);
 
@@ -284,38 +411,28 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     }
   }, [leadId]);
 
-  console.log(lead);
-
   return (
     <div className=" overflow-y-auto hide-scrollbar rounded-t-lg shadow bg-white h-full">
       {/* Messages */}
       <div className="p-4 space-y-3">
-        {messages.map((msg, idx) => (
-          <div key={idx}>
-            <ChatbotMessage
-              from={msg.from}
-              text={msg.text}
-              color={{
-                userMessageColor: theme?.userMessageColor,
-                messageColor: theme?.messageColor,
-              }}
-            />
+        {messages.length > 0 &&
+          messages.map((msg, idx) => (
+            <div className="space-y-2" key={idx}>
+              <ChatbotMessage
+                message={msg}
+                color={{
+                  userMessageColor: theme?.userMessageColor,
+                  messageColor: theme?.messageColor,
+                  backgroundColor: theme?.backgroundColor,
+                }}
+                onButtonClick={({ id, title, messageId }) =>
+                  handleButtonReply({ replyId: id, msg: title, messageId })
+                }
+              />
+            </div>
+          ))}
 
-            {msg.options && msg.options.length > 0 && msg.optionHandles && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {msg.options.map((opt) => (
-                  <button
-                    key={opt.value}
-                    className="bg-gray-50 hover:bg-gray-300 border border-slate-200 shadow-md text-gray-800 px-5 py-1  rounded-full text-sm transition cursor-pointer"
-                    onClick={() => handleSend(opt.label, opt)}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+        <div>{typingIndicator && <TypingIndicator />}</div>
 
         <div ref={endMessageAreaDivRef} />
       </div>

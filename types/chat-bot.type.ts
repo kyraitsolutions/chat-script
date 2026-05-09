@@ -1,33 +1,235 @@
 import { z } from "zod";
 
-export const ChatbotElementSchema = z.object({
-  id: z.string(), // frontend UUID or id
-  type: z.enum(["text", "image", "video", "audio", "option"]).default("text"),
-  content: z.string().default(""),
-  // default to current ISO timestamp if not provided
-  choices: z.array(z.string()).optional(),
+// NODES TYPES
+const NodeTypesSchema = z.enum([
+  "send_message",
+  "button",
+  "list",
+  "question",
+  "carousel",
+]);
 
-  date: z
-    .string()
-    .optional()
-    .default(() => new Date().toISOString()),
+// NODE DATA BASE SCHEMA
+export type TBaseNodeData<TType extends typeof NodeTypesSchema, TPayload> = {
+  label: string;
+  type: TType;
+  payload: TPayload;
+};
+
+// MESSAGES TYPES
+const HeaderTypes = z.enum(["text", "image", "video", "document"]);
+
+// INTERACTIVE HEADER SCHEMA
+export const HeaderSchema = z.object({
+  type: HeaderTypes,
+  text: z.string().optional(),
+  image: z
+    .object({
+      link: z.string().optional(),
+
+      id: z.string().optional(),
+    })
+    .optional(),
+  video: z
+    .object({
+      link: z.string().optional(),
+      id: z.string().optional(),
+    })
+    .optional(),
+  document: z
+    .object({
+      link: z.string().optional(),
+      id: z.string().optional(),
+    })
+    .optional(),
 });
+
+// INTERACTIVE FOOTER SCHEMA
+export const FooterSchema = z.object({
+  type: z.literal("text"),
+  text: z.string(),
+});
+
+// BUTTON NODE TYPES
+const ChatbotQuickReplyButtonSchema = z.object({
+  type: z.literal("quick_reply"),
+  quick_reply: z.object({
+    id: z.string(),
+    title: z.string(),
+  }),
+});
+
+const ChatbotReplyButtonSchema = z.object({
+  type: z.literal("reply"),
+  reply: z.object({
+    id: z.string(),
+    title: z.string(),
+  }),
+});
+
+export const ChatbotQuickReplyUnionSchema = z.union([
+  ChatbotQuickReplyButtonSchema,
+  ChatbotReplyButtonSchema,
+]);
+
+export const ChatbotReplyButtonsActionSchema = z.object({
+  buttons: z.array(ChatbotQuickReplyUnionSchema),
+});
+
+const ChatbotUrlButtonSchema = z.object({
+  name: z.literal("cta_url"),
+  parameters: z.object({
+    display_text: z.string(),
+    url: z.string(),
+  }),
+});
+
+export const ActionSchema = z.union([
+  ChatbotUrlButtonSchema,
+  ChatbotReplyButtonsActionSchema,
+]);
+
+export const ButtonNodeDataPayloadSchema = z.object({
+  type: z.literal("interactive"),
+  interactive: z.object({
+    type: z.literal("button"),
+    header: HeaderSchema,
+    body: z.object({
+      text: z.string(),
+    }),
+    footer: FooterSchema,
+    action: ActionSchema,
+  }),
+});
+
+// LIST NODE TYPES
+export const ListRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+});
+
+// LIST SECTION
+export const ListSectionSchema = z.object({
+  title: z.string(),
+  rows: z.array(ListRowSchema),
+});
+
+// LIST ACTION
+export const ListActionSchema = z.object({
+  button: z.string(),
+  sections: z.array(ListSectionSchema),
+});
+
+// LIST NODE PAYLOAD
+export const ListNodeDataPayloadSchema = z.object({
+  type: z.literal("interactive"),
+  interactive: z.object({
+    type: z.literal("list"),
+    header: HeaderSchema,
+    body: z.object({
+      text: z.string(),
+    }),
+    footer: FooterSchema,
+    action: ListActionSchema,
+  }),
+});
+
+// QUESTION NODE PAYLOAD
+export const QuestionNodeDataPayloadSchema = z.object({
+  type: z.literal("question"),
+  question: z.object({
+    inputType: z.enum(["text", "email", "phone", "date"]),
+    text: z.string(),
+  }),
+});
+
+// SEND MESSAGE NODE TYPES
+export const SendMessageTextSchema = z.object({
+  id: z.string(),
+  type: z.literal("text"),
+  content: z.string(),
+});
+
+export const SendMessageImageSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal("image"),
+  image: z.object({
+    link: z.string(),
+    caption: z.string().optional(),
+  }),
+});
+
+export const SendMessageVideoSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal("video"),
+  video: z.object({
+    link: z.string(),
+  }),
+});
+
+export const SendMessageDocumentSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal("document"),
+  document: z.object({
+    link: z.string(),
+  }),
+});
+
+export const SendMessageNodeDataPayloadSchema = z.array(
+  z.union([
+    SendMessageTextSchema,
+    SendMessageImageSchema,
+    SendMessageVideoSchema,
+    SendMessageDocumentSchema,
+  ]),
+);
+
+// export const ChatbotNodePayloadSchema = z.union([
+//   SendMessageNodeDataPayloadSchema,
+//   ButtonNodeDataPayloadSchema,
+// ]);
 
 /* -------------------------
    Node data schema
    ------------------------- */
-export const ChatbotNodeDataSchema = z.object({
-  label: z.string().default(""),
-  value: z.string().default(""),
-  elements: z.array(ChatbotElementSchema).default([]),
+const SendMessageNodeDataSchema = z.object({
+  label: z.string(),
+  type: z.literal("send_message"),
+  payload: SendMessageNodeDataPayloadSchema,
 });
+
+const ButtonNodeDataSchema = z.object({
+  label: z.string(),
+  type: z.literal("button"),
+  payload: ButtonNodeDataPayloadSchema,
+});
+
+const listNodeDataSchema = z.object({
+  label: z.string(),
+  type: z.literal("list"),
+  payload: ListNodeDataPayloadSchema,
+});
+
+const questionNodeDataSchema = z.object({
+  label: z.string(),
+  type: z.literal("question"),
+  payload: QuestionNodeDataPayloadSchema,
+});
+
+export const ChatbotNodeDataSchema = z.discriminatedUnion("type", [
+  SendMessageNodeDataSchema,
+  ButtonNodeDataSchema,
+  listNodeDataSchema,
+  questionNodeDataSchema,
+]);
 
 /* -------------------------
    Node schema
-   ------------------------- */
+  ------------------------- */
 export const ChatbotNodeSchema = z.object({
   id: z.string(), // use UUID from frontend
-  type: z.enum(["chat", "form"]).default("chat"),
+  type: z.enum(["send_message", "button", "list", "question", "carousel"]),
   position: z
     .object({
       x: z.number().default(0),
@@ -38,12 +240,11 @@ export const ChatbotNodeSchema = z.object({
   height: z.number().optional().default(100),
   selected: z.boolean().optional().default(false),
   dragging: z.boolean().optional().default(false),
-  data: ChatbotNodeDataSchema.default({ label: "", value: "", elements: [] }),
+  data: ChatbotNodeDataSchema,
 });
 
 /* -------------------------
-   Edge schema
-   ------------------------- */
+   Edge schema   ------------------------- */
 export const ChatbotEdgeSchema = z.object({
   id: z.string(),
   source: z.string(),
@@ -108,7 +309,7 @@ export const ZChatBotSchema = z.object({
 
   // --- Config Section ---
   config: z.object({
-    enableTypingIndicator: z.boolean().default(true),
+    showTypingIndicator: z.boolean().default(true),
     enableWidgetMessage: z.boolean().default(true),
 
     widgetMessageOnline: z
@@ -153,18 +354,18 @@ export const ZChatBotSchema = z.object({
     fallbackMessage: z
       .string()
       .default(
-        "I apologize, but I didn't understand that. Could you please rephrase your question?"
+        "I apologize, but I didn't understand that. Could you please rephrase your question?",
       ),
     showWelcomeMessage: z.boolean().default(true),
     thankyouMessage: z
       .string()
       .default(
-        "It's been a pleasure chatting with you today, Please take a moment to drop us your rating"
+        "It's been a pleasure chatting with you today, Please take a moment to drop us your rating",
       ),
     waitingMessage: z
       .string()
       .default(
-        "Please wait while we connect you to our support representative"
+        "Please wait while we connect you to our support representative",
       ),
   }),
 
@@ -172,8 +373,7 @@ export const ZChatBotSchema = z.object({
 });
 
 /* -------------------------
-   Export TypeScript types
-   ------------------------- */
+   Export TypeScript types   ------------------------- */
 export type TChatbotTheme = z.infer<typeof ChatbotThemeSchema>;
 export type TChatbotNode = z.infer<typeof ChatbotNodeSchema>;
 export type TChatbotEdge = z.infer<typeof ChatbotEdgeSchema>;

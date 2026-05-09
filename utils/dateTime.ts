@@ -1,21 +1,3 @@
-/**
- * Date & Time Utilities
- * --------------------
- * All date-related helpers should live in this file.
- * Keep this file framework-agnostic and browser-safe.
- */
-
-/**
- * Formats a timestamp into a short relative time string
- * Examples:
- *  - "now"
- *  - "5m"
- *  - "2h"
- *  - "3d"
- *  - "2w"
- *  - "4mo"
- *  - "1y"
- */
 export const formatRelativeTime = (timestamp: number): string => {
   const now = Date.now();
   const diffMs = now - timestamp;
@@ -40,10 +22,6 @@ export const formatRelativeTime = (timestamp: number): string => {
   return `${years}y`;
 };
 
-/**
- * Formats timestamp to a readable date
- * Example: "Jan 12, 2026"
- */
 export const formatDate = (timestamp: number): string => {
   return new Date(timestamp).toLocaleDateString(undefined, {
     year: "numeric",
@@ -52,10 +30,6 @@ export const formatDate = (timestamp: number): string => {
   });
 };
 
-/**
- * Formats timestamp to time
- * Example: "10:42 AM"
- */
 export const formatTime = (timestamp: number): string => {
   return new Date(timestamp).toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -63,9 +37,6 @@ export const formatTime = (timestamp: number): string => {
   });
 };
 
-/**
- * Returns true if timestamp is today
- */
 export const isToday = (timestamp: number): boolean => {
   const date = new Date(timestamp);
   const today = new Date();
@@ -77,16 +48,13 @@ export const isToday = (timestamp: number): boolean => {
   );
 };
 
-/**
- * Returns "Today", "Yesterday", or formatted date
- */
 export const formatSmartDate = (timestamp: number): string => {
   const date = new Date(timestamp);
   const today = new Date();
 
   const diffDays = Math.floor(
     (today.setHours(0, 0, 0, 0) - new Date(date).setHours(0, 0, 0, 0)) /
-      (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24),
   );
 
   if (diffDays === 0) return "Today";

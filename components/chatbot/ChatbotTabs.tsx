@@ -24,8 +24,7 @@ const tabs: Tab[] = [
 ];
 
 const ChatbotTabs = () => {
-  const { setView } = useChatbotContext();
-
+  const { setView, chatbotData } = useChatbotContext();
   const handleTabChange = (tab: View) => {
     setView(tab);
   };
@@ -41,11 +40,17 @@ const ChatbotTabs = () => {
         {tabs?.map((tab) => (
           <button
             key={tab?.value}
-            className="flex flex-col items-center justify-center cursor-pointer"
+            className="flex flex-col items-center justify-center cursor-pointer rounded-full"
             onClick={() => handleTabChange(tab?.value)}
           >
-            {tab?.icon && tab?.icon}
-            <span className="text-xs text-gray-700">{tab?.label}</span>
+            <div
+              style={{
+                color: chatbotData?.theme?.backgroundColor || "#000000",
+              }}
+            >
+              {tab?.icon && tab?.icon}
+            </div>
+            <span className="text-sm text-gray-500">{tab?.label}</span>
           </button>
         ))}
         {/* HOME TAB */}

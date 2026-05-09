@@ -1,6 +1,6 @@
 "use clinet";
 import { ChatbotProvider, useChatbotContext } from "@/context/ChatbotContext";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import ChatbotFooter from "./ChatbotFooter";
 import ChatbotHeader from "./ChatbotHeader";
 import ChatbotMain from "./ChatbotMain";
@@ -8,6 +8,14 @@ import { TChatBotData } from "@/types/chat-bot.type";
 import ChatHome from "./ChatbotHome";
 import ChatbotTabs from "./ChatbotTabs";
 import ChatMessagesLists from "./ChatMessagesLists";
+import { clearExpiredSessions } from "@/utils/chatbot/chatbotIndexDb";
+import { CookieUtils } from "@/utils/cookie-storage.utils";
+import { generateVisitorId } from "@/utils/generateVisitorId";
+import {
+  BASE_URL_API,
+  COOKIES_STORAGE_KEY,
+  VISITOR_INIT_COOLDOWN,
+} from "@/constant/constant";
 
 type ChatbotWindowProps = {
   onClose: () => void;
@@ -29,6 +37,50 @@ const ChatbotWindow = ({
     submitRef.current?.(message); // Call Main's submit with message
   };
 
+  const initVisitor = async () => {
+    // await clearExpiredSessions();
+
+    const visitor = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID);
+    const lastInitedAt = CookieUtils.getItem(COOKIES_STORAGE_KEY.LAST_INIT_AT);
+
+    if (
+      visitor &&
+      lastInitedAt &&
+      Date.now() - Number(lastInitedAt) < VISITOR_INIT_COOLDOWN
+    ) {
+      return;
+    }
+
+    let finalVisitorId = visitor;
+
+    if (!finalVisitorId) {
+      const visitorId = generateVisitorId();
+      CookieUtils.setItem(COOKIES_STORAGE_KEY.VISITOR_ID, visitorId);
+      finalVisitorId = visitorId;
+    }
+
+    await fetch(`${BASE_URL_API}/api/visitor/init`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        accountId,
+        visitorId: finalVisitorId,
+        platform: "chatbot",
+        identifiers: {
+          chatbotId,
+        },
+      }),
+    });
+
+    CookieUtils.setItem(COOKIES_STORAGE_KEY.LAST_INIT_AT, Date.now());
+  };
+
+  useEffect(() => {
+    initVisitor();
+  }, []);
+
   return (
     <main className="sm:rounded-[20px] overflow-hidden shadow-lg h-screen sm:h-153.5 w-screen sm:w-100 min-w-76 flex flex-col sm:mb-2">
       {/* chatbot top header  */}
@@ -42,12 +94,15 @@ const ChatbotWindow = ({
       <div className="flex-1 overflow-y-auto hide-scrollbar">
         {view === "home" && <ChatHome />}
 
-        {view === "chats" && <ChatMessagesLists chatbotId={chatbotId} />}
+        {view === "chats" && (
+          <ChatMessagesLists chatbotId={chatbotId} accountId={accountId} />
+        )}
 
         {view === "messages area" && (
           <React.Fragment>
             <ChatbotMain
               theme={chatbotData?.theme || null}
+              config={chatbotData?.config || null}
               submitRef={submitRef}
               nodes={chatbotData?.flow?.nodes || []}
               edges={chatbotData?.flow?.edges || []}

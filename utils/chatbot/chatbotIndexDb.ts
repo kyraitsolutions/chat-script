@@ -1,20 +1,17 @@
 import { Lead } from "@/components/chatbot/ChatbotMain";
 import { CHATBOT_DB } from "@/constant/constant";
+import { TMessage } from "@/types/message.type";
 
-export type ChatMessage = {
-  from: "bot" | "user";
-  text: string;
-  options?: { label: string; value: string }[];
-  optionHandles?: string[];
-};
+const TWO_DAYS = 10 * 1000;
 
 export type ChatSession = {
   sessionId: string;
   chatbotId: string;
-  messages?: ChatMessage[];
+  messages?: TMessage[];
   currentNodeId?: string | null;
-  leadId: string | null;
-  lead: Lead | null;
+  leadId?: string | null;
+  lead?: Lead | null;
+  createdAt: number;
   updatedAt: number;
 };
 
@@ -112,5 +109,54 @@ export const getAllSessionsByChatbot = async (
     req.onsuccess = () => {
       resolve((req.result || []).filter((s) => s.chatbotId === chatbotId));
     };
+  });
+};
+
+export const deleteSession = async (sessionId: string) => {
+  return new Promise<void>((resolve, reject) => {
+    const request = indexedDB.open(CHATBOT_DB?.config?.DB_NAME);
+
+    request.onsuccess = () => {
+      const db = request.result;
+
+      const transaction = db.transaction("sessions", "readwrite");
+      const store = transaction.objectStore("sessions");
+
+      const deleteRequest = store.delete(sessionId);
+
+      deleteRequest.onsuccess = () => resolve();
+
+      deleteRequest.onerror = () => reject(deleteRequest.error);
+    };
+
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const clearExpiredSessions = async () => {
+  const db = await openDB();
+
+  return new Promise<void>((resolve) => {
+    const tx = db.transaction(CHATBOT_DB.config.STORE_NAME, "readwrite");
+
+    const store = tx.objectStore(CHATBOT_DB.config.STORE_NAME);
+
+    const request = store.getAll();
+
+    request.onsuccess = () => {
+      const sessions = request.result || [];
+
+      const now = Date.now();
+
+      sessions.forEach((session) => {
+        const isExpired = now - session.updatedAt > TWO_DAYS;
+
+        if (isExpired) {
+          store.delete(session.sessionId);
+        }
+      });
+    };
+
+    tx.oncomplete = () => resolve();
   });
 };

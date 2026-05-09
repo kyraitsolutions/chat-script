@@ -12,8 +12,31 @@
   const parentDoc = window.parent.document;
   const parentBody = parentDoc.body;
 
-  window.addEventListener("message", (event) => {
+  const handleMessage = function (event) {
+    // console.log(event?.data?.type);
+
+    // if (event?.data?.type === "CHATBOT_READY") {
+    //   iframe.contentWindow.postMessage(
+    //     {
+    //       type: "CHATBOT_INIT",
+    //       payload: { ...window.eazbotConfig } || {},
+    //     },
+    //     "http://localhost:3001",
+    //   );
+    // }
+
+    if (event?.data?.type === "CHATBOT_INIT") {
+      iframe.contentWindow.postMessage(
+        {
+          type: "CHATBOT_INIT",
+          payload: { ...window.eazbotConfig } || {},
+        },
+        "http://localhost:3001",
+      );
+    }
+
     if (event.data?.type === "CHATBOT_READY") {
+      console.log(event?.data?.payload);
       if (event?.data?.payload?.active) {
         if (event?.data?.payload?.chatbotOpen) {
           if (isMobile) {
@@ -61,18 +84,8 @@
       } else {
         iframe.style.display = "none";
       }
-
-      try {
-        iframe.contentWindow?.postMessage(
-          {
-            type: "CHATBOT_INIT",
-            payload: { ...window.eazbotConfig } || {},
-          },
-          "*",
-        );
-      } catch (error) {
-        console.log(error);
-      }
     }
-  });
+  };
+
+  window.addEventListener("message", handleMessage);
 })();
