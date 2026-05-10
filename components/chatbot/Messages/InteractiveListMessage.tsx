@@ -93,7 +93,7 @@ const InteractiveListMessage = ({
                           onButtonClick?.({
                             id: row.id,
                             title: row.title,
-                            messageId: message.id,
+                            messageId: message.messageId,
                           })
                         }
                         className="w-full rounded-xl border border-black/10 p-3 text-left hover:bg-black/5 transition"

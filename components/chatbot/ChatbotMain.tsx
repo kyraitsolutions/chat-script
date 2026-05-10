@@ -98,6 +98,8 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
     const currentMessage = messages.find((m) => m.messageId === messageId);
 
+    console.log("currentMessage", currentMessage);
+
     const messagePayload: TMessage = {
       messageId: generateMessageId({
         direction: "inbound",
@@ -129,7 +131,7 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     // UI
     setMessages((prev) => [...prev, messagePayload]);
 
-    // BACKEND
+    // BACKEND;
     await persistMessages({
       ...messagePayload,
     });
