@@ -98,8 +98,6 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
     const currentMessage = messages.find((m) => m.messageId === messageId);
 
-    console.log("currentMessage", currentMessage);
-
     const messagePayload: TMessage = {
       messageId: generateMessageId({
         direction: "inbound",
@@ -172,6 +170,20 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
 
   const handlePersistMessages = async (messages: TMessage[]) => {
     const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
+
+    if (messages?.length >= 2) {
+      for (let i = 0; i < messages.length; i++) {
+        await persistMessages({
+          ...messages[i],
+          chatbotId: chatbotId,
+          accountId: String(accountId),
+          visitorId: String(visitorId),
+          conversationId: String(conversationId),
+        });
+      }
+
+      return;
+    }
 
     await persistMessages({
       ...messages[0],
@@ -308,16 +320,18 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   // };
 
   const initSession = async () => {
+    if (!activeSessionId) return;
+
     setMessages([]);
     setLoading(true);
     sessionIdRef.current = activeSessionId;
-    const session = await getSession(activeSessionId!);
+    const session = await getSession(activeSessionId);
 
     if (session && session.messages && session.messages.length > 0) {
       setMessages(session.messages);
       setCurrentNodeId(session.currentNodeId || null);
-      setLeadId(session.leadId || null);
-      setLead(session.lead as Lead);
+      // setLeadId(session.leadId || null);
+      // setLead(session.lead as Lead);
     } else {
       handleSetInitialMessage();
     }

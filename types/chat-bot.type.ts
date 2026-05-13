@@ -217,11 +217,61 @@ const questionNodeDataSchema = z.object({
   payload: QuestionNodeDataPayloadSchema,
 });
 
+export const CarouselHeaderSchema = z.union([
+  z.object({
+    type: z.literal("image"),
+    image: z.object({
+      link: z.string(),
+    }),
+  }),
+
+  z.object({
+    type: z.literal("video"),
+    video: z.object({
+      link: z.string(),
+    }),
+  }),
+]);
+
+export const CarouselCardSchema = z.object({
+  card_index: z.number(),
+
+  header: CarouselHeaderSchema,
+
+  body: z.object({
+    text: z.string(),
+  }),
+
+  action: ActionSchema,
+});
+
+export const CarouselNodeDataPayloadSchema = z.object({
+  type: z.literal("interactive"),
+  interactive: z.object({
+    type: z.literal("carousel"),
+
+    body: z.object({
+      text: z.string(),
+    }),
+
+    action: z.object({
+      cards: z.array(CarouselCardSchema),
+    }),
+  }),
+});
+
+export const CarouselNodeDataSchema = z.object({
+  label: z.string(),
+  type: z.literal("carousel"),
+  payload: CarouselNodeDataPayloadSchema,
+});
+
 export const ChatbotNodeDataSchema = z.discriminatedUnion("type", [
   SendMessageNodeDataSchema,
   ButtonNodeDataSchema,
   listNodeDataSchema,
   questionNodeDataSchema,
+  CarouselNodeDataSchema,
 ]);
 
 /* -------------------------

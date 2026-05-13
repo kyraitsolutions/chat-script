@@ -1,9 +1,12 @@
 import React from "react";
 
-import InteractiveMessage from "./Messages/InteractiveMessage";
 import { TMessage } from "@/types/message.type";
-import TextMessage from "./Messages/TextMessage";
+import DocumentMessage from "./Messages/DocumentMessage";
+import ImageMessage from "./Messages/ImageMessage";
+import InteractiveMessage from "./Messages/InteractiveMessage";
 import QuestionMessage from "./Messages/QuestionMessage";
+import TextMessage from "./Messages/TextMessage";
+import VideoMessage from "./Messages/VideoMessage";
 
 interface MessageProps {
   message: TMessage;
@@ -55,43 +58,44 @@ const ChatbotMessage: React.FC<MessageProps> = ({
 
     case "image":
       return (
-        <div className={wrapperClass}>
-          <div className="space-y-2">
-            <img
-              src={message?.media?.image?.link}
-              alt=""
-              className="max-w-xs rounded-2xl"
-            />
-
-            {message?.media?.image?.caption && (
-              <div className={`${commonClass} ${bubbleClass}`}>
-                {message.media?.image?.caption}
-              </div>
-            )}
-          </div>
-        </div>
+        <ImageMessage
+          message={message}
+          wrapperClass={wrapperClass}
+          commonClass={commonClass}
+          isBot={isBot}
+          theme={{
+            backgroundColor,
+            color: userMessageColor,
+          }}
+        />
       );
 
     case "video":
       return (
-        <div className={wrapperClass}>
-          <video controls className="max-w-xs rounded-2xl">
-            <source src={message.media?.video?.link} />
-          </video>
-        </div>
+        <VideoMessage
+          message={message}
+          wrapperClass={wrapperClass}
+          commonClass={commonClass}
+          isBot={isBot}
+          theme={{
+            backgroundColor,
+            color: userMessageColor,
+          }}
+        />
       );
 
     case "document":
       return (
-        <div className={wrapperClass}>
-          <a
-            href={message.media?.document?.link}
-            target="_blank"
-            className={`${commonClass} block`}
-          >
-            Open Document
-          </a>
-        </div>
+        <DocumentMessage
+          wrapperClass={wrapperClass}
+          commonClass={commonClass}
+          isBot={isBot}
+          theme={{
+            backgroundColor,
+            color: userMessageColor,
+          }}
+          message={message}
+        />
       );
 
     case "interactive":

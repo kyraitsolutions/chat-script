@@ -14,7 +14,7 @@ type TExecuteNodeProps = {
   setTypingIndicator: React.Dispatch<React.SetStateAction<boolean>>;
   setInputConfig: React.Dispatch<React.SetStateAction<TInputConfig>>;
   sourceHandle?: string;
-  onMessages?: (messages: TMessage[]) => Promise<void> | void;
+  onMessages?: (messages: TMessage[] | []) => Promise<void> | void;
 };
 
 export const executeNode = async ({
@@ -37,10 +37,7 @@ export const executeNode = async ({
       type: node?.data?.payload?.question?.inputType,
     });
   } else {
-    setInputConfig({
-      type: "textarea",
-      placeholder: "Type a message...",
-    });
+    setInputConfig(null);
   }
 
   // STORE CURRENT NODE
@@ -66,8 +63,9 @@ export const executeNode = async ({
   setTypingIndicator(false);
 
   // SHOW MESSAGE
-  if (messages?.length) {
+  if (messages && messages?.length) {
     setMessages((prev) => [...prev, ...messages]);
+
     await onMessages?.(messages);
   }
 

@@ -5,6 +5,7 @@ import { TChatbotTheme } from "@/types/chat-bot.type";
 import React from "react";
 import { CalendarDays, Mail, Phone, Type } from "lucide-react";
 import { TbSend } from "react-icons/tb";
+import { DatePicker } from "../ui/DatePicker/DatePicker";
 
 type ChatbotFooterProps = {
   theme: TChatbotTheme | null;
@@ -22,7 +23,6 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
   const { input, setInput, inputConfig } = useChatbotContext();
 
   const handleSend = () => {
-    console.log("aaya");
     if (!input?.trim()) return;
     onSend(input.trim());
     setInput("");
@@ -40,20 +40,10 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
     switch (inputConfig?.type) {
       case "date":
         return (
-          <input
-            type="date"
-            required
-            value={input || ""}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={inputConfig?.placeholder || "Type a message..."}
-            className="
-              w-full
-              bg-transparent  
-              text-sm
-              outline-none
-              placeholder:text-gray-400
-            "
-          />
+          <div>
+            {/* <DatePicker range onChange={(date) => console.log(date)} /> */}
+            <input type="date" onChange={(e) => setInput(e.target.value)} />
+          </div>
         );
 
       case "text":
@@ -113,17 +103,16 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
 
         {/* SEND BUTTON */}
         <button
-          disabled={!input}
+          disabled={!input || !inputConfig}
           type="submit"
           style={{
             backgroundColor: theme?.backgroundColor || "#4f46e5",
           }}
-          className=" flex size-11 shrink-0 items-center justify-center rounded-full shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-80 "
+          className=" flex size-11 shrink-0 items-center justify-center rounded-full shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-80 disabled:cursor-auto disabled:hover:scale-100"
         >
           <TbSend color="#fff" size={18} />
         </button>
       </form>
-
       {/* FOOTER */}
       <p className="mt-2 text-center text-[10px] text-gray-400">
         Product by: Kyra IT Solutions

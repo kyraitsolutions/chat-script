@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ButtonNodeDataPayloadSchema,
+  CarouselNodeDataPayloadSchema,
   ListNodeDataPayloadSchema,
   QuestionNodeDataPayloadSchema,
 } from "./chat-bot.type";
@@ -34,9 +35,9 @@ const MessageFromSchema = z.enum(["me", "user", "bot"]);
 
 export const BaseMessageSchema = z.object({
   messageId: z.string(),
-  conversationId: z.string(),
-  accountId: z.string(),
-  visitorId: z.string(),
+  conversationId: z.string().optional(),
+  accountId: z.string().optional(),
+  visitorId: z.string().optional(),
   chatbotId: z.string().optional(),
   from: MessageFromSchema,
   type: TMessageType,
@@ -105,6 +106,11 @@ export const InteractiveListMessageSchema = BaseMessageSchema.extend({
   interactive: ListNodeDataPayloadSchema.shape.interactive,
 });
 
+export const InteractiveCarouselMessageSchema = BaseMessageSchema.extend({
+  type: z.literal("interactive"),
+  interactive: CarouselNodeDataPayloadSchema.shape.interactive,
+});
+
 export const QuestionMessageSchema = BaseMessageSchema.extend({
   type: z.literal("question"),
   question: QuestionNodeDataPayloadSchema.shape.question,
@@ -115,9 +121,10 @@ export const MessageSchema = z.union([
   ImageMessageSchema,
   VideoMessageSchema,
   DocumentMessageSchema,
-  InteractiveButtonMessageSchema,
-  InteractiveListMessageSchema,
   QuestionMessageSchema,
+  InteractiveListMessageSchema,
+  InteractiveButtonMessageSchema,
+  InteractiveCarouselMessageSchema,
 ]);
 
 export type TMessage = z.infer<typeof MessageSchema>;

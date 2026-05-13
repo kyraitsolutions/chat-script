@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  BASE_URL_API,
-  CHATBOT_DB,
-  COOKIES_STORAGE_KEY,
-} from "@/constant/constant";
+import { BASE_URL_API, COOKIES_STORAGE_KEY } from "@/constant/constant";
 import { useChatbotContext } from "@/context/ChatbotContext";
 import {
   createSession,
@@ -15,8 +11,9 @@ import {
 import { formatRelativeTime } from "@/utils/dateTime";
 import { useEffect, useState } from "react";
 
-import { Loader, Loader2, Trash2 } from "lucide-react";
 import { CookieUtils } from "@/utils/cookie-storage.utils";
+import { Loader, Trash2 } from "lucide-react";
+import { initConversation } from "@/services/conversation";
 
 type ChatbotMessageListsProps = {
   chatbotId: string;
@@ -35,9 +32,10 @@ const ChatMessagesLists = ({
   chatbotId,
   accountId,
 }: ChatbotMessageListsProps) => {
-  const [loading, setLoading] = useState(false);
   const { setView, setActiveSessionId, chatbotData, setConversationId } =
     useChatbotContext();
+
+  const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<MessageItem[]>([]);
 
   const handleMessageClick = (messageData: MessageItem) => {
@@ -64,26 +62,22 @@ const ChatMessagesLists = ({
     const newSessionId = crypto.randomUUID();
     const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID);
 
-    const res = await fetch(`${BASE_URL_API}/api/conversation/init`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        accountId,
-        visitorId,
+    try {
+      const response = await initConversation({
+        accountId: accountId,
+        visitorId: String(visitorId),
         platform: "chatbot",
         identifiers: {
           chatbotId,
         },
-      }),
-    });
+      });
 
-    const data = await res.json();
-    console.log("data", data);
+      if (response?.success) {
+        setConversationId(response.result?.doc?.id);
+      }
 
-    if (data?.success) {
       setView("messages area");
+
       await createSession({
         sessionId: newSessionId,
         chatbotId,
@@ -93,23 +87,11 @@ const ChatMessagesLists = ({
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-      setConversationId(data?.result?._id);
       setActiveSessionId(newSessionId);
+    } catch (error) {
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-
-    // setView("messages area");
-    // await createSession({
-    //   sessionId: newSessionId,
-    //   chatbotId,
-    //   messages: [],
-    //   currentNodeId: null,
-    //   leadId: null,
-    //   createdAt: Date.now(),
-    //   updatedAt: Date.now(),
-    // });
-    // setActiveSessionId(newSessionId);
   };
 
   const getAllChatbotSessions = async () => {
@@ -147,8 +129,6 @@ const ChatMessagesLists = ({
   useEffect(() => {
     getAllChatbotSessions();
   }, []);
-
-  console.log("messages", messages);
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden shadow-lg relative">
