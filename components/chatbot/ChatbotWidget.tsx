@@ -57,10 +57,10 @@ const ChatbotWidget = () => {
   const getChatbotData = async () => {
     try {
       const response = await fetch(
-        `${BASE_URL_API}/api/account/${chatbotConfig?.accountId}/chatbot/${chatbotConfig?.chatbotId}/get`,
+        `${BASE_URL_API}/api/chatbot/${chatbotConfig?.accountId}/${chatbotConfig?.chatbotId}/flow`,
       );
       const data = await response.json();
-      setChatbotData(() => data?.result?.docs);
+      setChatbotData(() => data?.result?.doc);
     } catch (error) {
       console.error("Error fetching chatbot data:", error);
     }
