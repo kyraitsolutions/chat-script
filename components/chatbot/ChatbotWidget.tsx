@@ -43,11 +43,11 @@ const ChatbotWidget = () => {
   // const [chatNodes, setChatNodes] = useState<TChatbotNode[] | []>([]);
   // const [chatEdges, setChatEdges] = useState<TChatbotEdge[] | []>([]);
   const [chatbotConfig, setChatbotConfig] = useState({
-    accountId: "69da6f0dc9a4b079de116cb7",
-    chatbotId: "69e24a79513820a741d3d583",
+    // accountId: "69da6f0dc9a4b079de116cb7",
+    // chatbotId: "69e24a79513820a741d3d583",
 
-    // accountId: "69da02ae43110bf379b35cf8",
-    // chatbotId: "69f1af40fae89cf130ba6c95",
+    accountId: "69da02ae43110bf379b35cf8",
+    chatbotId: "69f1af40fae89cf130ba6c95",
   });
 
   const toggleChatbot = () => {
