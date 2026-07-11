@@ -1,6 +1,10 @@
 (function () {
+  const url="https://chatbot.kyraitsolutions.com"
+  // const url="http://localhost:3001"
+
+
   const iframe = document.createElement("iframe");
-  iframe.src = "http://localhost:3001";
+  iframe.src = url;
   iframe.id = "chatbot-iframe";
   iframe.title = "Chatbot";
   iframe.classList.add("hide-scrollbar");
@@ -29,7 +33,7 @@
           type: "CHATBOT_INIT",
           payload: { ...window.eazbotConfig } || {},
         },
-        "http://localhost:3001",
+        url,
       );
     }
 
