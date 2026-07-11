@@ -13,8 +13,6 @@
   const parentBody = parentDoc.body;
 
   const handleMessage = function (event) {
-    // console.log(event?.data?.type);
-
     // if (event?.data?.type === "CHATBOT_READY") {
     //   iframe.contentWindow.postMessage(
     //     {
@@ -36,7 +34,7 @@
     }
 
     if (event.data?.type === "CHATBOT_READY") {
-      console.log(event?.data?.payload);
+      console.log("body ka hai yue to", event?.data?.payload);
       if (event?.data?.payload?.active) {
         if (event?.data?.payload?.chatbotOpen) {
           if (isMobile) {

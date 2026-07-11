@@ -43,8 +43,8 @@ const ChatbotWidget = () => {
   // const [chatNodes, setChatNodes] = useState<TChatbotNode[] | []>([]);
   // const [chatEdges, setChatEdges] = useState<TChatbotEdge[] | []>([]);
   const [chatbotConfig, setChatbotConfig] = useState({
-    accountId: "69da6f0dc9a4b079de116cb7",
-    chatbotId: "69e24a79513820a741d3d583",
+    accountId: "6a378da8789aaf51e63c9634",
+    chatbotId: "6a4e7e57a2fd505959b57da4",
 
     // accountId: "69da02ae43110bf379b35cf8",
     // chatbotId: "69f1af40fae89cf130ba6c95",
@@ -80,8 +80,11 @@ const ChatbotWidget = () => {
 
       // ✅ only process your type
       if (event.data.type !== "CHATBOT_INIT") return;
-      // setChatbotConfig(event.data.payload);
+
+      const { chatbotId, accountId } = event.data.payload;
+      setChatbotConfig({ chatbotId, accountId });
     };
+
     window.addEventListener("message", handleMessage);
 
     // ✅ send the message to the parent

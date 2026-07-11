@@ -3,7 +3,13 @@ import { createContext, useContext, useState } from "react";
 
 export type View = "home" | "chats" | "messages area" | null;
 
-export type TInputType = "text" | "email" | "phone" | "date" | "textarea";
+export type TInputType =
+  | "text"
+  | "email"
+  | "phone"
+  | "date"
+  | "date-range"
+  | "textarea";
 
 export type TInputConfig = {
   type: TInputType;
