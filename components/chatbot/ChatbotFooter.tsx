@@ -5,7 +5,7 @@ import { TChatbotTheme } from "@/types/chat-bot.type";
 import React from "react";
 import { CalendarDays, Mail, Phone, Type } from "lucide-react";
 import { TbSend } from "react-icons/tb";
-import DatePicker from "../ui/datePicker/DatePicker";
+import DatePicker from "../ui/DatePicker/DatePicker";
 
 type ChatbotFooterProps = {
   theme: TChatbotTheme | null;
