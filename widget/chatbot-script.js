@@ -12,8 +12,6 @@
   const parentDoc = window.parent.document;
   const parentBody = parentDoc.body;
 
-  
-
   window.addEventListener("message", (event) => {
     if (event.data?.type === "CHATBOT_READY") {
       if (event?.data?.payload?.active) {
