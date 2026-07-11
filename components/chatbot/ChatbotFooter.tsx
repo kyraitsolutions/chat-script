@@ -5,7 +5,7 @@ import { TChatbotTheme } from "@/types/chat-bot.type";
 import React from "react";
 import { CalendarDays, Mail, Phone, Type } from "lucide-react";
 import { TbSend } from "react-icons/tb";
-import { DatePicker } from "../ui/DatePicker/DatePicker";
+import DatePicker from "../ui/datePicker/DatePicker";
 
 type ChatbotFooterProps = {
   theme: TChatbotTheme | null;
@@ -21,6 +21,14 @@ const inputIcons = {
 
 const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
   const { input, setInput, inputConfig } = useChatbotContext();
+
+  const handleRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    if (!range.from && !range.to) return;
+
+    setInput(
+      `${range?.from?.toLocaleDateString("en-GB")} - ${range?.to?.toLocaleDateString("en-GB")}`,
+    );
+  };
 
   const handleSend = () => {
     if (!input?.trim()) return;
@@ -42,7 +50,32 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
         return (
           <div>
             {/* <DatePicker range onChange={(date) => console.log(date)} /> */}
-            <input type="date" onChange={(e) => setInput(e.target.value)} />
+            {/* <input type="date" onChange={(e) => setInput(e.target.value)} /> */}
+            <DatePicker
+              className="-mt-1.5"
+              onChange={(date) =>
+                date && setInput(date.toLocaleDateString("en-GB"))
+              }
+              disablePast
+              placeholder="Select Date"
+            />
+          </div>
+        );
+
+      case "date-range":
+        return (
+          <div>
+            {/* <DatePicker range onChange={(date) => console.log(date)} /> */}
+            {/* <input type="date" onChange={(e) => setInput(e.target.value)} /> */}
+            <DatePicker
+              mode="range"
+              // value={dateRange}
+
+              onChange={(range) => handleRangeChange(range)}
+              disablePast
+              className="-mt-1.5"
+              placeholder="Select Date Range"
+            />
           </div>
         );
 
@@ -108,7 +141,7 @@ const ChatbotFooter: React.FC<ChatbotFooterProps> = ({ theme, onSend }) => {
           style={{
             backgroundColor: theme?.backgroundColor || "#4f46e5",
           }}
-          className=" flex size-11 shrink-0 items-center justify-center rounded-full shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-80 disabled:cursor-auto disabled:hover:scale-100"
+          className=" flex size-11 shrink-0 items-center justify-center rounded-full shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-80 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           <TbSend color="#fff" size={18} />
         </button>

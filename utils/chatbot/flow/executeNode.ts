@@ -64,9 +64,9 @@ export const executeNode = async ({
 
   // SHOW MESSAGE
   if (messages && messages?.length) {
-    setMessages((prev) => [...prev, ...messages]);
+    setMessages((prev) => [...prev, ...(messages as TMessage[])]);
 
-    await onMessages?.(messages);
+    await onMessages?.(messages as TMessage[]);
   }
 
   // WAITING FOR INPUT

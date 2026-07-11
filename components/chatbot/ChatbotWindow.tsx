@@ -82,7 +82,7 @@ const ChatbotWindow = ({
   }, []);
 
   return (
-    <main className="sm:rounded-[20px] overflow-hidden shadow-lg h-screen sm:h-153.5 w-screen sm:w-100 min-w-76 flex flex-col sm:mb-2">
+    <main className="sm:rounded-[20px] overflow-hidden shadow-lg h-screen sm:h-153.5 w-screen sm:w-100 min-w-76 flex flex-col sm:mb-2 bg-gray-50">
       {/* chatbot top header  */}
       <ChatbotHeader
         theme={chatbotData?.theme || null}

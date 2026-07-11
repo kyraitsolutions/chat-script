@@ -27,8 +27,6 @@ export const useChatbotWebSocket = ({
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log("Socket connected");
-
       setIsConnected(true);
 
       ws.send(
@@ -76,7 +74,7 @@ export const useChatbotWebSocket = ({
   }, [visitorId, accountId, chatbotId]);
 
   return {
-    socket: socketRef.current,
+    socket: socketRef?.current,
     isConnected,
   };
 };

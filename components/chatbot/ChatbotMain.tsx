@@ -14,13 +14,13 @@ import {
 } from "@/types/chat-bot.type";
 import { getSession, updateSession } from "@/utils/chatbot/chatbotIndexDb";
 import { executeNode } from "@/utils/chatbot/flow/executeNode";
-import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
+// import { detectFieldFromQuestion } from "@/utils/leadFieldMapper";
 import React, { useEffect, useRef, useState } from "react";
 import ChatbotMessage from "./ChatbotMessage";
 import { TMessage } from "@/types/message.type";
 import TypingIndicator from "../typingIndicator/TypingIndicator";
 import { resolveNextNode } from "@/utils/chatbot/flow/resolveNextNode";
-import { saveMessagesToBackend } from "@/services/sendMessage";
+// import { saveMessagesToBackend } from "@/services/sendMessage";
 import { CookieUtils } from "@/utils/cookie-storage.utils";
 import { persistMessages } from "@/utils/persistMessage";
 import { generateMessageId } from "@/utils/generateMessageId";
@@ -138,35 +138,35 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
   };
 
   // handleSendChatToServerViaWebsocket
-  const handleSendChatToServerViaWebsocket = (
-    botReplyData: Message[],
-    userAnswer?: string,
-  ) => {
-    const lastBotMessage = messages[messages.length - 1]; // last bot question
-    const detectedField = detectFieldFromQuestion(lastBotMessage.text);
+  // const handleSendChatToServerViaWebsocket = (
+  //   botReplyData: Message[],
+  //   userAnswer?: string,
+  // ) => {
+  //   const lastBotMessage = messages[messages.length - 1]; // last bot question
+  //   const detectedField = detectFieldFromQuestion(lastBotMessage.text);
 
-    // Send all prev chat to server via websocket and set lead
-    setLead((prev) => {
-      const updatedLead = { ...prev };
-      if (detectedField && detectedField in updatedLead) {
-        // Known field (name/email/phone)
-        updatedLead[detectedField as "name" | "email" | "phone"] =
-          userAnswer || "";
-      } else {
-        // Custom field
-        updatedLead.customFields = {
-          ...prev.customFields,
-          [lastBotMessage.text]: userAnswer || "",
-        };
-      }
+  //   // Send all prev chat to server via websocket and set lead
+  //   setLead((prev) => {
+  //     const updatedLead = { ...prev };
+  //     if (detectedField && detectedField in updatedLead) {
+  //       // Known field (name/email/phone)
+  //       updatedLead[detectedField as "name" | "email" | "phone"] =
+  //         userAnswer || "";
+  //     } else {
+  //       // Custom field
+  //       updatedLead.customFields = {
+  //         ...prev.customFields,
+  //         [lastBotMessage.text]: userAnswer || "",
+  //       };
+  //     }
 
-      return updatedLead;
-    });
+  //     return updatedLead;
+  //   });
 
-    setMessages((prev) => {
-      return [...prev, ...botReplyData];
-    });
-  };
+  //   setMessages((prev) => {
+  //     return [...prev, ...botReplyData];
+  //   });
+  // };
 
   const handlePersistMessages = async (messages: TMessage[]) => {
     const visitorId = CookieUtils.getItem(COOKIES_STORAGE_KEY.VISITOR_ID) || "";
@@ -244,16 +244,20 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       currentNodeId,
     });
 
-    executeNode({
-      nodeId: String(nextEdge?.target),
-      nodes,
-      edges,
-      setMessages,
-      setTypingIndicator,
-      setCurrentNodeId,
-      setInputConfig,
-      onMessages: handlePersistMessages,
-    });
+    if (nextEdge) {
+      executeNode({
+        nodeId: String(nextEdge?.target),
+        nodes,
+        edges,
+        setMessages,
+        setTypingIndicator,
+        setCurrentNodeId,
+        setInputConfig,
+        onMessages: handlePersistMessages,
+      });
+    } else {
+      setInputConfig(null);
+    }
   };
 
   const handleButtonReply = async ({
@@ -265,6 +269,10 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
     msg?: string;
     messageId?: string;
   }) => {
+    console.log("replyId", replyId);
+    console.log("msg", msg);
+    console.log("messageId", messageId);
+
     if (!replyId) return;
     handleShowUserMessage({ replyId, msg, messageId });
 
@@ -272,6 +280,8 @@ const ChatbotMain: React.FC<ChatbotMainProps> = ({
       edges,
       sourceHandle: replyId,
     });
+
+    console.log("nextEdge", nextEdge);
 
     if (!nextEdge?.target) return;
 
