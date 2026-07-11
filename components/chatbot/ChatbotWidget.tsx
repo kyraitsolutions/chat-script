@@ -46,8 +46,8 @@ const ChatbotWidget = () => {
     // accountId: "69da6f0dc9a4b079de116cb7",
     // chatbotId: "69e24a79513820a741d3d583",
 
-    accountId: "69da02ae43110bf379b35cf8",
-    chatbotId: "69f1af40fae89cf130ba6c95",
+    accountId: "6a28993ff6e8220710629945",
+    chatbotId: "6a2bcf1c605166618631c668",
   });
 
   const toggleChatbot = () => {
