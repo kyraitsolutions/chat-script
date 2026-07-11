@@ -1,5 +1,10 @@
 export class CookieUtils {
+
+  private static isBrowser() {
+    return typeof document !== "undefined";
+  }
   static setItem<T>(key: string, value: T, days = 7): void {
+    if (!this.isBrowser()) return;
     try {
       const json = JSON.stringify(value);
       const expires = new Date(
@@ -14,6 +19,7 @@ export class CookieUtils {
   }
 
   static getItem<T>(key: string): T | null {
+    if (!this.isBrowser()) return null;
     try {
       const cookies = document.cookie.split(";");
 
@@ -33,11 +39,13 @@ export class CookieUtils {
   }
 
   static removeItem(key: string): void {
+    if (!this.isBrowser()) return;
     // Set expiration in the past to delete
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
   }
 
   static clear(): void {
+    if (!this.isBrowser()) return;
     const cookies = document.cookie.split(";");
 
     for (const cookie of cookies) {
