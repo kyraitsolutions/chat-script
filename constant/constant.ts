@@ -1,5 +1,8 @@
-export const BASE_URL_API = "http://localhost:3000";
-export const WEBSOCKET_URL = "ws://localhost:3000";
+// export const BASE_URL_API = "http://localhost:3000";
+// export const WEBSOCKET_URL = "ws://localhost:3000";
+
+export const BASE_URL_API = "https://api.kyraitsolutions.com";
+export const WEBSOCKET_URL = "wss://api.kyraitsolutions.com";
 
 // export const BASE_URL_API = "https://chat.kyracr";
 // export const WEBSOCKET_URL = "ws://localhost:3000";
